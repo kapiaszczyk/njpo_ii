@@ -5,12 +5,17 @@ using System.Configuration;
 using System.Text;
 using System.Reflection.Metadata.Ecma335;
 
-class CatalogGeneric<T>(IWriter<T> writer, IReader<T> reader)
+class CatalogGeneric<T>
 {
-
     private List<T> catalog = [];
-    private readonly IReader<T> reader = reader;
-    private readonly IWriter<T> writer = writer;
+    private readonly IReader<T> reader;
+    private readonly IWriter<T> writer;
+
+    public CatalogGeneric(IWriter<T> writer, IReader<T> reader)
+    {
+        this.writer = writer;
+        this.reader = reader;
+    }
 
     public void Add(T item) { catalog.Add(item); }
     public void AddMany(List<T> items) { catalog.AddRange(items); }
@@ -31,11 +36,7 @@ class CatalogGeneric<T>(IWriter<T> writer, IReader<T> reader)
         }
     }
 
-    public T? Search(T catalogItem)
-    {
-        return (catalog.Count != 0 && catalog.Contains(catalogItem)) ? catalogItem : default(T);
-    }
-
+    public T? Search(T catalogItem) { return (catalog.Count != 0 && catalog.Contains(catalogItem)) ? catalogItem : default(T); }
     public void Clear() { catalog.Clear(); }
     public bool Validate(T item) { return catalog.Contains(item); }
     public void Write() { writer.Write(catalog); }
@@ -52,7 +53,6 @@ public class Employee
     public string Email { get; set; }
     public int Id { get; set; }
 
-    // Parameterless constructor for XML serialization
     public Employee()
     {
     }
@@ -66,7 +66,7 @@ public class Employee
         Id = id;
     }
 
-    // Overriding Equals(), otherwise Contains() won't work
+    // Overriding Equals(), otherwise Contains() won't work, GetHashCode() is also required
     public override bool Equals(object obj)
     {
         if (obj == null || GetType() != obj.GetType())
@@ -86,18 +86,14 @@ public class Employee
         }
     }
 
-    // And GetHashCode()
     public override int GetHashCode() { return Id.GetHashCode(); }
 
     public bool ValidateData() { return EmployeeValidator.ValidateAll(this.Name, this.Surname, this.Position, this.Email, this.Id); }
 
-    // Show()
     public String Show() { return string.Format("Name: {0}, Surname: {1}, Position: {2}, Email: {3},  Id: {4}", this.Name, this.Surname, this.Position, this.Email, this.Id); }
 
-    // IsMatch()
     public bool IsMatch(Employee employee) { return employee.Equals(this); }
 
-    // ToString()
     public override string ToString() { return string.Format("Name: {0}, Surname: {1}, Position: {2}, Email: {3}, Id: {4}", this.Name, this.Surname, this.Position, this.Email, this.Id); }
 
 }
@@ -155,7 +151,7 @@ public class JSONReader<T> : IReader<T>
             string encryptedJsonString = File.ReadAllText("employee_catalog.json");
             string decryptedJsonString = cipher.Decrypt(encryptedJsonString);
             List<T>? deserializedList = JsonSerializer.Deserialize<List<T>>(decryptedJsonString);
-            // if deserializedList is null, return empty list
+
             return deserializedList ?? [];
         }
         else
@@ -185,7 +181,6 @@ public class XMLReader<T> : IReader<T>
             StringReader stringReader = new(decryptedXmlString);
             List<T>? deserializedList = (List<T>?)serializer.Deserialize(stringReader);
 
-            // if deserializedList is null, return an empty list
             return deserializedList ?? [];
         }
         else
@@ -207,14 +202,8 @@ public class JSONWriter<T> : IWriter<T>
 
     public void Write(List<T> list)
     {
-        Console.WriteLine("Writing to JSON");
         string jsonString = JsonSerializer.Serialize(list);
-
-        // encrypt jsonString
         string encryptedJsonString = cipher.Encrypt(jsonString);
-
-        //print jsonString for debugging
-        Console.WriteLine(jsonString);
 
         File.WriteAllText("employee_catalog.json", encryptedJsonString);
     }
@@ -239,13 +228,10 @@ public class XMLWriter<T> : IWriter<T>
 class CaesarCipher
 {
 
-    // Storing the shift value in app.config
     private int shift;
 
-    // Encrypting a string
     public string Encrypt(string input)
     {
-        // generate shift value
         this.shift = GenerateShift();
 
         StringBuilder encrypted = new();
@@ -256,11 +242,8 @@ class CaesarCipher
         return encrypted.ToString();
     }
 
-
-    // Decrypting a string
     public string Decrypt(string input)
     {
-        // read shift value from app.config
         this.shift = GetShift();
 
         StringBuilder decrypted = new();
@@ -268,6 +251,7 @@ class CaesarCipher
         {
             decrypted.Append((char)(c - shift));
         }
+
         return decrypted.ToString();
     }
 
@@ -276,7 +260,6 @@ class CaesarCipher
         Random random = new();
         int shift = random.Next(2, 10);
 
-        // save to app.config
         ConfigurationManager.AppSettings["shift"] = shift.ToString();
 
         return shift;
@@ -291,7 +274,6 @@ class CaesarCipher
     }
 
 }
-
 
 class Program
 {

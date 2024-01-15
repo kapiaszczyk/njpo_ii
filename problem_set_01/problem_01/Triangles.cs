@@ -1,88 +1,48 @@
-namespace Triangles
+public abstract class Triangle
 {
-    public abstract class Triangle(double a, double b, double c)
+    protected readonly double a;
+    protected readonly double b;
+    protected readonly double c;
+    protected readonly double p;
+
+    protected Triangle(double a, double b, double c)
     {
-
-        private readonly double a = a;
-        private readonly double b = b;
-        private readonly double c = c;
-        private readonly double p = (a + b + c) / 2;
-
-        public double Area()
-        {
-            return Math.Sqrt(p * (p - a) * (p - b) * (p - c));
-        }
-
-        public double Perimeter()
-        {
-            return a + b + c;
-        }
-
-        public override string ToString()
-        {
-            return "a = " + a + ", b = " + b + ", c = " + c + ", p = " + p;
-        }
+        this.a = a;
+        this.b = b;
+        this.c = c;
+        this.p = (a + b + c) / 2;
     }
 
-    // trójkąt równoboczny
-    public class EquilateralTriangle : Triangle
+    public double Area()
     {
-        private readonly double a;
-        private readonly double b;
-        private readonly double c;
-        private readonly double p;
-
-        public EquilateralTriangle(double a) : base(a, a, a)
-        {
-            this.a = a;
-            this.b = a;
-            this.c = a;
-            this.p = (a + a + a) / 2;
-        }
-
+        return Math.Sqrt(p * (p - a) * (p - b) * (p - c));
     }
 
-    // trójkąt równoramienny
-    public class IsoscelesTriangle : Triangle
+    public double Perimeter()
     {
-        private readonly double a;
-        private readonly double b;
-        private readonly double c;
-        private readonly double p;
-
-        public IsoscelesTriangle(double a, double b) : base(a, b, b)
-        {
-            this.a = a;
-            this.b = b;
-            this.c = b;
-            this.p = (a + b + c) / 2;
-        }
-
+        return a + b + c;
     }
 
-    // trójkąt prostokątny
-    public class RightTriangle : Triangle
+    public override string ToString()
     {
-        private readonly double a;
-        private readonly double b;
-        private readonly double c;
-        private readonly double p;
-
-        public RightTriangle(double a, double b) : base(a, b, Math.Sqrt(a * a + b * b))
-        {
-            this.a = a;
-            this.b = b;
-            this.c = Math.Sqrt(a * a + b * b);
-            this.p = (a + b + c) / 2;
-        }
-
+        return string.Format("a: {0}, b: {1}, c: {2}, area: {3}, perimeter: {4}", a, b, c, Area(), Perimeter());
     }
+}
 
-    class Program
-    {
-        static void Main(string[] args)
-        {
-        }
-    }
+// trójkąt równoboczny
+public class EquilateralTriangle : Triangle
+{
+    public EquilateralTriangle(double a) : base(a, a, a) { }
+}
 
+// trójkąt równoramienny
+public class IsoscelesTriangle : Triangle
+{
+    public IsoscelesTriangle(double a, double b) : base(a, b, b) { }
+}
+
+// trójkąt prostokątny
+public class RightTriangle : Triangle
+{
+    public RightTriangle(double a, double b) : base(a, b, Math.Sqrt(a * a + b * b)) { }
 }
