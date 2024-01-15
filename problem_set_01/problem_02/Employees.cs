@@ -1,14 +1,13 @@
 using System.Collections;
+using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Xml.Serialization;
+using System.IO;
 
-class CatalogGeneric<T>
+class CatalogGeneric<T>()
 {
-    private CaesarCipher cipher = new();
 
-    public CatalogGeneric()
-    {
-        catalog = [];
-    }
+    private List<T> catalog = [];
 
     // adding
     public void Add(T item)
@@ -33,7 +32,7 @@ class CatalogGeneric<T>
         {
             foreach (T item in catalog)
             {
-                Console.WriteLine(item.ToString());
+                Console.WriteLine(item?.ToString());
             }
         }
     }
@@ -57,105 +56,63 @@ class CatalogGeneric<T>
         return catalog.Contains(item);
     }
 
+
 }
 
-public class Employee(string name, string surname, string position, string email)
+public class Employee
 {
 
     // Instance variables 
-    private string name = name;
-    private string surname = surname;
-    private string position = position;
-    private string email = email;
-    private int id;
+    public string Name { get; set; }
+    public string Surname { get; set; }
+    public string Position { get; set; }
+    public string Email { get; set; }
+    public int Id { get; set; }
 
 
-    // getters
-    public String GetName()
+    public Employee(string name, string surname, string position, string email, int id)
     {
-        return this.name;
+        Name = name;
+        Surname = surname;
+        Position = position;
+        Email = email;
+        Id = id;
     }
 
-    public String GetSurname()
-    {
-        return this.surname;
-    }
-
-    public String GetPosition()
-    {
-        return this.position;
-    }
-
-    public String GetEmail()
-    {
-        return this.email;
-    }
-
-    public int GetId()
-    {
-        return this.id;
-    }
-
-    // setters
-
-    public void SetName(String name)
-    {
-        this.name = name;
-    }
-
-    public void SetSurname(String surname)
-    {
-        this.surname = surname;
-    }
-
-    public void SetPosition(String position)
-    {
-        this.position = position;
-    }
-
-    public void SetEmail(String email)
-    {
-        this.email = email;
-    }
-
-    public void SetId(int id)
-    {
-        this.id = id;
-    }
 
     // Validate data
     public bool ValidateData()
     {
         EmployeeValidator validator = new();
-        return EmployeeValidator.ValidateAll(this.name, this.surname, this.position, this.email, this.id);
+        return EmployeeValidator.ValidateAll(this.Name, this.Surname, this.Position, this.Email, this.Id);
     }
 
     // Show()
-    public static String Show(string name, string surname, string position, string email, int id)
+    public String Show()
     {
-        return string.Format("Name: {0}, Surname: {1}, Position: {2}, Email: {3}, ID: {4}", name, surname, position, email, id);
+        return string.Format("Name: {0}, Surname: {1}, Position: {2}, Email: {3},  Id: {4}", this.Name, this.Surname, this.Position, this.Email, this.Id);
     }
 
     // IsMatch()
-    public bool IsMatch(String name, String surname, String position, String email, int id)
+    public bool IsMatch(Employee employee)
     {
         return (
-            name.Equals(this.name) &&
-            surname.Equals(this.surname) &&
-            position.Equals(this.position) &&
-            email.Equals(this.email) &&
-            id.Equals(this.id)
-            );
+            this.Name == employee.Name &&
+            this.Surname == employee.Surname &&
+            this.Position == employee.Position &&
+            this.Email == employee.Email &&
+            this.Id == employee.Id
+        );
     }
 
     // ToString()
     public override string ToString()
     {
-        return string.Format("Name: {0}, Surname: {1}, Position: {2}, Email: {3}, ID: {4}", name, surname, position, email, id);
+        return string.Format("Name: {0}, Surname: {1}, Position: {2}, Email: {3}, Id: {4}", this.Name, this.Surname, this.Position, this.Email, this.Id);
     }
 }
 
-class EmployeeValidator
+partial class EmployeeValidator
 {
 
     const int MIN_NAME_LENGTH = 2;
@@ -198,6 +155,13 @@ class EmployeeValidator
             ValidateEmail(email) &&
             ValidateId(id)
             );
+    }
+}
+
+class Program
+{
+    static void Main(string[] args)
+    {
     }
 
 }
