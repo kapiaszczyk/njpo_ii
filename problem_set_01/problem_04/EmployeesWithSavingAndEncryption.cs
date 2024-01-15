@@ -1,10 +1,9 @@
-using System.Collections;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
-using System.IO;
 using System.Configuration;
 using System.Text;
+using System.Reflection.Metadata.Ecma335;
 
 class CatalogGeneric<T>(IWriter<T> writer, IReader<T> reader)
 {
@@ -13,19 +12,10 @@ class CatalogGeneric<T>(IWriter<T> writer, IReader<T> reader)
     private readonly IReader<T> reader = reader;
     private readonly IWriter<T> writer = writer;
 
-    // adding
-    public void Add(T item)
-    {
-        catalog.Add(item);
-    }
+    public void Add(T item) { catalog.Add(item); }
+    public void AddMany(List<T> items) { catalog.AddRange(items); }
+    public void Remove(T item) { catalog.Remove(item); }
 
-    // removing
-    public void Remove(T item)
-    {
-        catalog.Remove(item);
-    }
-
-    // printing
     public void Print()
     {
         if (catalog.Count == 0)
@@ -41,44 +31,21 @@ class CatalogGeneric<T>(IWriter<T> writer, IReader<T> reader)
         }
     }
 
-    // searching
     public T? Search(T catalogItem)
     {
-        if (catalog.Count != 0 && catalog.Contains(catalogItem))
-        {
-            return catalogItem;
-        }
-        else
-        {
-            return default(T);
-        }
+        return (catalog.Count != 0 && catalog.Contains(catalogItem)) ? catalogItem : default(T);
     }
 
-    // validating
-    public bool Validate(T item)
-    {
-        return catalog.Contains(item);
-    }
-
-    // writing
-    public void Write()
-    {
-        writer.Write(catalog);
-    }
-
-    // reading
-    public void Read()
-    {
-        catalog = reader.Read();
-    }
-
+    public void Clear() { catalog.Clear(); }
+    public bool Validate(T item) { return catalog.Contains(item); }
+    public void Write() { writer.Write(catalog); }
+    public void Read() { catalog = reader.Read(); }
 
 }
 
 public class Employee
 {
 
-    // Instance variables 
     public string Name { get; set; }
     public string Surname { get; set; }
     public string Position { get; set; }
@@ -99,37 +66,40 @@ public class Employee
         Id = id;
     }
 
-
-    // Validate data
-    public bool ValidateData()
+    // Overriding Equals(), otherwise Contains() won't work
+    public override bool Equals(object obj)
     {
-        EmployeeValidator validator = new();
-        return EmployeeValidator.ValidateAll(this.Name, this.Surname, this.Position, this.Email, this.Id);
+        if (obj == null || GetType() != obj.GetType())
+        {
+            return false;
+        }
+        else
+        {
+            Employee employee = (Employee)obj;
+            return (
+                this.Name == employee.Name &&
+                this.Surname == employee.Surname &&
+                this.Position == employee.Position &&
+                this.Email == employee.Email &&
+                this.Id == employee.Id
+            );
+        }
     }
+
+    // And GetHashCode()
+    public override int GetHashCode() { return Id.GetHashCode(); }
+
+    public bool ValidateData() { return EmployeeValidator.ValidateAll(this.Name, this.Surname, this.Position, this.Email, this.Id); }
 
     // Show()
-    public String Show()
-    {
-        return string.Format("Name: {0}, Surname: {1}, Position: {2}, Email: {3},  Id: {4}", this.Name, this.Surname, this.Position, this.Email, this.Id);
-    }
+    public String Show() { return string.Format("Name: {0}, Surname: {1}, Position: {2}, Email: {3},  Id: {4}", this.Name, this.Surname, this.Position, this.Email, this.Id); }
 
     // IsMatch()
-    public bool IsMatch(Employee employee)
-    {
-        return (
-            this.Name == employee.Name &&
-            this.Surname == employee.Surname &&
-            this.Position == employee.Position &&
-            this.Email == employee.Email &&
-            this.Id == employee.Id
-        );
-    }
+    public bool IsMatch(Employee employee) { return employee.Equals(this); }
 
     // ToString()
-    public override string ToString()
-    {
-        return string.Format("Name: {0}, Surname: {1}, Position: {2}, Email: {3}, Id: {4}", this.Name, this.Surname, this.Position, this.Email, this.Id);
-    }
+    public override string ToString() { return string.Format("Name: {0}, Surname: {1}, Position: {2}, Email: {3}, Id: {4}", this.Name, this.Surname, this.Position, this.Email, this.Id); }
+
 }
 
 partial class EmployeeValidator
@@ -144,27 +114,20 @@ partial class EmployeeValidator
     const String EMAIL_REGEX = "^[A-Za-z0-9.]+@(.+)$";  // Regex pattern : any number of letters, numbers and dots, then @, 
                                                         // then any number of letters, numbers and dots and $ asserting the end of the string
 
-    // validate name and surname
+
     private static bool ValidateName(String name)
     {
-        return !String.IsNullOrEmpty(name) && name.Length > MIN_NAME_LENGTH && name.Length < MAX_NAME_LENGTH && Regex.IsMatch(name, NAME_REGEX);
+        return !string.IsNullOrEmpty(name) && name.Length > MIN_NAME_LENGTH && name.Length < MAX_NAME_LENGTH && Regex.IsMatch(name, NAME_REGEX);
     }
 
-    // validate email address against regex
-    private static bool ValidateEmail(String email)
-    {
-        return Regex.IsMatch(email, EMAIL_REGEX);
-    }
+    private static bool ValidateEmail(String email) { return Regex.IsMatch(email, EMAIL_REGEX); }
 
     private static bool ValidatePosition(String position)
     {
-        return !String.IsNullOrEmpty(position) && position.Length > MIN_POSITION_LENGTH && position.Length < MAX_POSITION_LENGTH && Regex.IsMatch(position, NAME_REGEX);
+        return !string.IsNullOrEmpty(position) && position.Length > MIN_POSITION_LENGTH && position.Length < MAX_POSITION_LENGTH && Regex.IsMatch(position, NAME_REGEX);
     }
 
-    private static bool ValidateId(int id)
-    {
-        return id > MIN_ID;
-    }
+    private static bool ValidateId(int id) { return id > MIN_ID; }
 
     public static bool ValidateAll(String name, String surname, String position, String email, int id)
     {
@@ -178,10 +141,7 @@ partial class EmployeeValidator
     }
 }
 
-public interface IReader<T>
-{
-    List<T> Read();
-}
+public interface IReader<T> { List<T> Read(); }
 
 public class JSONReader<T> : IReader<T>
 {
@@ -209,7 +169,7 @@ public class JSONReader<T> : IReader<T>
 public class XMLReader<T> : IReader<T>
 {
 
-    private CaesarCipher cipher = new();
+    private readonly CaesarCipher cipher = new();
 
     public List<T> Read()
     {
@@ -243,7 +203,7 @@ public interface IWriter<T>
 public class JSONWriter<T> : IWriter<T>
 {
 
-    private CaesarCipher cipher = new();
+    private readonly CaesarCipher cipher = new();
 
     public void Write(List<T> list)
     {
@@ -263,7 +223,7 @@ public class JSONWriter<T> : IWriter<T>
 public class XMLWriter<T> : IWriter<T>
 {
 
-    private CaesarCipher cipher = new();
+    private readonly CaesarCipher cipher = new();
 
     public void Write(List<T> list)
     {
@@ -336,82 +296,46 @@ class CaesarCipher
 class Program
 {
 
-    public void TestJSON()
+    public bool TestJSON()
     {
-        // create catalog
-        CatalogGeneric<Employee> catalog = new CatalogGeneric<Employee>(new JSONWriter<Employee>(), new JSONReader<Employee>());
+        CatalogGeneric<Employee> catalog = new CatalogGeneric<Employee>(new XMLWriter<Employee>(), new XMLReader<Employee>());
 
-        // create employees
-        Employee employee1 = new Employee("John", "Doe", "Manager", "some@mail.com", 123);
-        Employee employee2 = new Employee("Jane", "Doe", "Manager", "someother@mail.com", 456);
-        Employee employee3 = new Employee("John", "Smith", "Manager", "someother@mail.com", 789);
-
-        // add employees to catalog
-        catalog.Add(employee1);
-        catalog.Add(employee2);
-        catalog.Add(employee3);
-
-        // print catalog
-        catalog.Print();
-
-        // save catalog
+        catalog.AddMany(new List<Employee>() {
+            new Employee("Geralt", "Wiedzmin", "Wiedzmin", "geralt@gmail.com", 001),
+            new Employee("Triss", "Merigold", "Czarodziejka", "triss@gmail.com", 002),
+            new Employee("Sigismund", "Dijkstra", "Szpieg", "sigi@gmail.com", 003)
+        });
         catalog.Write();
-
-        // clear catalog
-        catalog = new CatalogGeneric<Employee>(new JSONWriter<Employee>(), new JSONReader<Employee>());
-
-        // read catalog
+        catalog.Clear();
         catalog.Read();
 
-        // print catalog
-        catalog.Print();
+        return catalog.Validate(new Employee("Triss", "Merigold", "Czarodziejka", "triss@gmail.com", 002));
 
     }
 
-    public void TestXML()
+    public bool TestXML()
     {
-        // create catalog
         CatalogGeneric<Employee> catalog = new CatalogGeneric<Employee>(new XMLWriter<Employee>(), new XMLReader<Employee>());
 
-        // create employees
-        Employee employee1 = new Employee("John", "Doe", "Manager", "some@mail.com", 123);
-        Employee employee2 = new Employee("Jane", "Doe", "Manager", "someother@mail.com", 456);
-        Employee employee3 = new Employee("John", "Smith", "Manager", "someother@mail.com", 789);
-
-        // add employees to catalog
-        catalog.Add(employee1);
-        catalog.Add(employee2);
-        catalog.Add(employee3);
-
-        // print catalog
-        Console.WriteLine("Printing catalog before saving");
-        catalog.Print();
-
-        // save catalog
+        catalog.AddMany(new List<Employee>() {
+            new Employee("Geralt", "Wiedzmin", "Wiedzmin", "geralt@gmail.com", 001),
+            new Employee("Triss", "Merigold", "Czarodziejka", "triss@gmail.com", 002),
+            new Employee("Sigismund", "Dijkstra", "Szpieg", "sigi@gmail.com", 003)
+        });
         catalog.Write();
-
-        // clear catalog
-        catalog = new CatalogGeneric<Employee>(new XMLWriter<Employee>(), new XMLReader<Employee>());
-
-        // Printing empty catalog
-        Console.WriteLine("Printing empty catalog");
-        catalog.Print();
-
-        // read catalog
+        catalog.Clear();
         catalog.Read();
 
-        // print catalog
-        Console.WriteLine("Printing catalog after reading");
-        catalog.Print();
+        return catalog.Validate(new Employee("Triss", "Merigold", "Czarodziejka", "triss@gmail.com", 002));
 
     }
 
     static void Main(string[] args)
     {
         Program program = new Program();
-        program.TestJSON();
-        program.TestXML();
-    }
 
+        Console.WriteLine("JSON: " + program.TestJSON());
+        Console.WriteLine("XML: " + program.TestXML());
+    }
 
 }
