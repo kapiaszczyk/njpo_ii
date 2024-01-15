@@ -123,32 +123,35 @@ public class Employee(string name, string surname, string position, string email
         this.id = id;
     }
 
-    public bool ValidateData(string name, string surname, string position, string email, int id)
+    // Validate data
+    public bool ValidateData()
     {
         EmployeeValidator validator = new();
-        return EmployeeValidator.ValidateAll(name, surname, position, email, id);
+        return EmployeeValidator.ValidateAll(this.name, this.surname, this.position, this.email, this.id);
     }
 
     // Show()
-    public String Show()
+    public static String Show(string name, string surname, string position, string email, int id)
     {
-        return string.Format("Name: {0}, Surname: {1}, Position: {2}, Email: {3},  Id: {4}", this.name, this.surname, this.position, this.email, this.id);
+        return string.Format("Name: {0}, Surname: {1}, Position: {2}, Email: {3}, ID: {4}", name, surname, position, email, id);
     }
+
     // IsMatch()
-    public bool IsMatch(String name, String surname, String position, String email)
+    public bool IsMatch(String name, String surname, String position, String email, int id)
     {
         return (
             name.Equals(this.name) &&
             surname.Equals(this.surname) &&
             position.Equals(this.position) &&
-            email.Equals(this.email)
+            email.Equals(this.email) &&
+            id.Equals(this.id)
             );
     }
 
     // ToString()
     public override string ToString()
     {
-        return string.Format("Name: {0}, Surname: {1}, Position: {2}, Email: {3}", name, surname, position, email);
+        return string.Format("Name: {0}, Surname: {1}, Position: {2}, Email: {3}, ID: {4}", name, surname, position, email, id);
     }
 }
 
